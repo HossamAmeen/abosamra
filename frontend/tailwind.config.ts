@@ -1,0 +1,51 @@
+import type { Config } from 'tailwindcss'
+
+export default {
+  content: ['./index.html', './src/**/*.{vue,ts}'],
+  theme: {
+    extend: {
+      colors: {
+        primary: { DEFAULT: '#F7A04B', soft: '#FFE6CC', tint: '#FFF1E2' },
+        link: { DEFAULT: '#A3510F', hover: '#7A3A08' },
+        'brand-deep': '#7A3A08',
+        ink: { DEFAULT: '#3B2412', 2: '#5A3B26' },
+        muted: '#6E5040',
+        bg: '#FFF8F1',
+        surface: '#FFFFFF',
+        border: '#F1DFCC',
+        'input-border': '#E3CCB4',
+        dashed: '#E3B98E',
+        'on-dark': { DEFAULT: '#FFF8F1', sub: '#F3DCC6' },
+        success: { DEFAULT: '#2F6B3A', soft: '#E3F1E1', strong: '#234F2B' },
+        danger: { DEFAULT: '#B3261E', soft: '#FDE7E5' },
+        disabled: { DEFAULT: '#EADBCB', text: '#6E5040' },
+        'switch-off': '#B9A694',
+        'icon-stroke': '#6B3E1C',
+        status: {
+          'new-bg': '#FFE6CC',
+          'new-text': '#7A3A08',
+          'preparing-bg': '#FFF4C2',
+          'preparing-text': '#6B5200',
+          'out-bg': '#DDEBFA',
+          'out-text': '#1F4E7A',
+          'delivered-bg': '#E3F1E1',
+          'delivered-text': '#2F6B3A',
+          'cancelled-bg': '#FDE7E5',
+          'cancelled-text': '#B3261E',
+        },
+      },
+      fontFamily: { sans: ['Cairo', 'system-ui', 'sans-serif'] },
+      borderRadius: {
+        card: '16px',
+        banner: '20px',
+        btn: '14px',
+        field: '12px',
+        band: '24px',
+        thumb: '12px',
+      },
+      maxWidth: { app: '480px', admin: '720px' },
+      spacing: { 13: '3.25rem', 15: '3.75rem' },
+    },
+  },
+  plugins: [],
+} satisfies Config

@@ -1,0 +1,2419 @@
+openapi: 3.0.3
+info:
+  title: Abo Samra API
+  version: 1.0.0
+  description: Backend API for the Abo Samra spice shop store.
+paths:
+  /api/health/:
+    get:
+      operationId: health_retrieve
+      description: Send the password in the `X-Health-Check-Token` header (preferred)
+        or the `password` query parameter.
+      summary: Health check
+      tags:
+      - health
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+          description: ''
+        '403':
+          description: Missing or invalid health password
+        '429':
+          description: Rate limit exceeded
+        '503':
+          description: Database unavailable
+  /api/v1/admin/customers/:
+    get:
+      operationId: v1_admin_customers_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: رقم الصفحة ضمن النتائج المقسمة.
+        schema:
+          type: integer
+      - in: query
+        name: q
+        schema:
+          type: string
+        description: name or phone
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdminCustomerList'
+          description: ''
+  /api/v1/admin/customers/{id}/orders/:
+    get:
+      operationId: v1_admin_customers_orders_list
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: رقم الصفحة ضمن النتائج المقسمة.
+        schema:
+          type: integer
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdminOrderList'
+          description: ''
+  /api/v1/admin/dashboard/:
+    get:
+      operationId: v1_admin_dashboard_retrieve
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminDashboard'
+          description: ''
+  /api/v1/admin/offers/:
+    get:
+      operationId: v1_admin_offers_list
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminOffer'
+          description: ''
+    post:
+      operationId: v1_admin_offers_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminOfferRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminOfferRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminOfferRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOffer'
+          description: ''
+  /api/v1/admin/offers/{id}/:
+    get:
+      operationId: v1_admin_offers_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOffer'
+          description: ''
+    patch:
+      operationId: v1_admin_offers_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminOfferRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminOfferRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminOfferRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOffer'
+          description: ''
+    delete:
+      operationId: v1_admin_offers_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/admin/orders/:
+    get:
+      operationId: v1_admin_orders_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: رقم الصفحة ضمن النتائج المقسمة.
+        schema:
+          type: integer
+      - in: query
+        name: q
+        schema:
+          type: string
+        description: order number, customer name or phone
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - cancelled
+          - delivered
+          - new
+          - out_for_delivery
+          - preparing
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdminOrderList'
+          description: ''
+  /api/v1/admin/orders/{id}/:
+    get:
+      operationId: v1_admin_orders_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOrder'
+          description: ''
+    patch:
+      operationId: v1_admin_orders_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedOrderStatusRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedOrderStatusRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedOrderStatusRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOrder'
+          description: ''
+        '400':
+          description: Invalid status / transition
+  /api/v1/admin/orders/counts/:
+    get:
+      operationId: v1_admin_orders_counts_retrieve
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderCounts'
+          description: ''
+  /api/v1/admin/products/:
+    get:
+      operationId: v1_admin_products_list
+      parameters:
+      - in: query
+        name: category
+        schema:
+          type: string
+        description: category id or slug
+      - in: query
+        name: is_available
+        schema:
+          type: boolean
+      - name: page
+        required: false
+        in: query
+        description: رقم الصفحة ضمن النتائج المقسمة.
+        schema:
+          type: integer
+      - in: query
+        name: q
+        schema:
+          type: string
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdminProductList'
+          description: ''
+    post:
+      operationId: v1_admin_products_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminProductRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminProductRequest'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminProductRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminProduct'
+          description: ''
+  /api/v1/admin/products/{id}/:
+    get:
+      operationId: v1_admin_products_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminProduct'
+          description: ''
+    patch:
+      operationId: v1_admin_products_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminProductRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminProductRequest'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminProductRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminProduct'
+          description: ''
+    delete:
+      operationId: v1_admin_products_destroy
+      description: Soft delete (archive + unavailable) when orders reference it, else
+        hard delete.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/auth/admin/login/:
+    post:
+      operationId: v1_auth_admin_login_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminLoginRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminLoginRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminLoginRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+          description: ''
+        '401':
+          description: Wrong credentials
+        '429':
+          description: Rate limit exceeded
+  /api/v1/auth/login/:
+    post:
+      operationId: v1_auth_login_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+          description: ''
+        '400':
+          description: Invalid phone
+        '404':
+          description: not_found
+        '429':
+          description: Rate limit exceeded
+  /api/v1/auth/logout/:
+    post:
+      operationId: v1_auth_logout_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '204':
+          description: No response body
+        '401':
+          description: Invalid refresh token
+  /api/v1/auth/register/:
+    post:
+      operationId: v1_auth_register_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+          description: ''
+        '400':
+          description: Validation error
+        '409':
+          description: phone_exists
+        '429':
+          description: Rate limit exceeded
+  /api/v1/auth/token/refresh/:
+    post:
+      operationId: v1_auth_token_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Refresh'
+          description: ''
+        '401':
+          description: Invalid
+  /api/v1/cart/quote/:
+    post:
+      operationId: v1_cart_quote_create
+      description: Price a cart. Works for guests; throttled with the `quote` scope.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuoteRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/QuoteRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/QuoteRequestRequest'
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Quote'
+          description: ''
+        '400':
+          description: Validation error
+        '429':
+          description: Rate limit exceeded
+  /api/v1/categories/:
+    get:
+      operationId: v1_categories_list
+      tags:
+      - v1
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+          description: ''
+  /api/v1/me/:
+    get:
+      operationId: v1_me_retrieve
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    patch:
+      operationId: v1_me_partial_update
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/v1/offers/active/:
+    get:
+      operationId: v1_offers_active_list
+      tags:
+      - v1
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Offer'
+          description: ''
+  /api/v1/orders/:
+    post:
+      operationId: v1_orders_create
+      description: Place a cash-on-delivery order (server recomputes everything).
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OrderCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OrderCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
+        '400':
+          description: Validation error
+        '401':
+          description: Not authenticated
+        '409':
+          description: cart_changed (body carries a fresh `quote`)
+        '429':
+          description: Rate limit exceeded
+        '503':
+          description: Shop is not accepting orders
+  /api/v1/orders/{id}/:
+    get:
+      operationId: v1_orders_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
+  /api/v1/orders/mine/:
+    get:
+      operationId: v1_orders_mine_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: رقم الصفحة ضمن النتائج المقسمة.
+        schema:
+          type: integer
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedOrderList'
+          description: ''
+  /api/v1/products/:
+    get:
+      operationId: products_list
+      parameters:
+      - in: query
+        name: category
+        schema:
+          type: string
+      - in: query
+        name: discounted
+        schema:
+          type: string
+      - in: query
+        name: featured
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: رقم الصفحة ضمن النتائج المقسمة.
+        schema:
+          type: integer
+      - in: query
+        name: q
+        schema:
+          type: string
+      tags:
+      - v1
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProductList'
+          description: ''
+  /api/v1/products/{slug}/:
+    get:
+      operationId: v1_products_retrieve
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - v1
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+          description: ''
+  /api/v1/settings/:
+    get:
+      operationId: v1_settings_retrieve
+      tags:
+      - v1
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShopSettings'
+          description: ''
+components:
+  schemas:
+    ActiveOffer:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+        value:
+          type: number
+          format: double
+      required:
+      - id
+      - name
+      - type
+      - value
+    AdminCustomer:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+          title: الاسم
+        phone:
+          type: string
+          readOnly: true
+          title: الموبايل
+        email:
+          type: string
+          format: email
+          readOnly: true
+          title: الإيميل
+        default_address:
+          type: string
+          readOnly: true
+          title: العنوان الافتراضي
+        area:
+          type: string
+          readOnly: true
+          title: المنطقة
+        date_joined:
+          type: string
+          format: date-time
+          readOnly: true
+          title: تاريخ التسجيل
+        orders_count:
+          type: integer
+          readOnly: true
+        total_spent:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        last_order_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - area
+      - date_joined
+      - default_address
+      - email
+      - id
+      - last_order_at
+      - name
+      - orders_count
+      - phone
+      - total_spent
+    AdminDashboard:
+      type: object
+      properties:
+        orders_today:
+          type: integer
+        sales_today:
+          type: integer
+        pending_count:
+          type: integer
+        new_customers_week:
+          type: integer
+        low_stock:
+          type: array
+          items:
+            $ref: '#/components/schemas/LowStockProduct'
+      required:
+      - low_stock
+      - new_customers_week
+      - orders_today
+      - pending_count
+      - sales_today
+    AdminLoginRequest:
+      type: object
+      properties:
+        phone:
+          type: string
+        password:
+          type: string
+          writeOnly: true
+      required:
+      - password
+      - phone
+    AdminOffer:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        type:
+          allOf:
+          - $ref: '#/components/schemas/TypeEnum'
+          title: النوع
+        name:
+          type: string
+          title: الاسم
+          maxLength: 120
+        description:
+          type: string
+          title: الوصف
+        value:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+          nullable: true
+        target:
+          $ref: '#/components/schemas/TargetIn'
+        bundle_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BundleItemIn'
+        bundle_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        old_price:
+          type: integer
+          nullable: true
+          readOnly: true
+        min_order:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        starts_at:
+          type: string
+          format: date-time
+          title: يبدأ
+        ends_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: ينتهي
+        is_featured:
+          type: boolean
+          title: عرض الأسبوع
+        is_active:
+          type: boolean
+          title: شغال
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - old_price
+      - type
+    AdminOfferRequest:
+      type: object
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/TypeEnum'
+          title: النوع
+        name:
+          type: string
+          minLength: 1
+          title: الاسم
+          maxLength: 120
+        description:
+          type: string
+          title: الوصف
+        value:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+          nullable: true
+        target:
+          $ref: '#/components/schemas/TargetInRequest'
+        bundle_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BundleItemInRequest'
+        bundle_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        min_order:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        starts_at:
+          type: string
+          format: date-time
+          title: يبدأ
+        ends_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: ينتهي
+        is_featured:
+          type: boolean
+          title: عرض الأسبوع
+        is_active:
+          type: boolean
+          title: شغال
+      required:
+      - name
+      - type
+    AdminOrder:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        number:
+          type: integer
+          readOnly: true
+          title: رقم الطلب
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          readOnly: true
+          title: الحالة
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        customer:
+          allOf:
+          - $ref: '#/components/schemas/OrderCustomer'
+          readOnly: true
+        address:
+          type: string
+          readOnly: true
+          title: العنوان
+        area:
+          type: string
+          readOnly: true
+          title: المنطقة
+        notes:
+          type: string
+          readOnly: true
+          title: ملاحظات
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderLine'
+          readOnly: true
+        subtotal:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        discounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderDiscount'
+          readOnly: true
+        discount_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        delivery_fee:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        payment_method:
+          allOf:
+          - $ref: '#/components/schemas/PaymentMethodEnum'
+          readOnly: true
+          title: طريقة الدفع
+        items_summary:
+          type: string
+          readOnly: true
+      required:
+      - address
+      - area
+      - created_at
+      - customer
+      - delivery_fee
+      - discount_total
+      - discounts
+      - id
+      - items_summary
+      - lines
+      - notes
+      - number
+      - payment_method
+      - status
+      - subtotal
+      - total
+    AdminProduct:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          title: المعرّف
+          pattern: ^[-\w]+$
+        name:
+          type: string
+          title: الاسم
+          maxLength: 120
+          minLength: 2
+        description:
+          type: string
+          title: الوصف
+        image:
+          type: string
+          format: uri
+          nullable: true
+        category:
+          type: integer
+        is_available:
+          type: boolean
+          title: متاح
+        is_featured:
+          type: boolean
+          title: مميز
+        stock_qty:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,7}(?:\.\d{0,3})?$
+          nullable: true
+          title: الكمية في المخزن
+        low_stock_threshold:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,7}(?:\.\d{0,3})?$
+          nullable: true
+          title: حد التنبيه
+        stock_unit:
+          type: string
+          title: وحدة المخزن
+          maxLength: 30
+        variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminVariant'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - category
+      - created_at
+      - id
+      - name
+      - slug
+      - updated_at
+      - variants
+    AdminProductRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          title: الاسم
+          maxLength: 120
+        description:
+          type: string
+          title: الوصف
+        image:
+          type: string
+          format: binary
+          nullable: true
+        category:
+          type: integer
+        is_available:
+          type: boolean
+          title: متاح
+        is_featured:
+          type: boolean
+          title: مميز
+        stock_qty:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,7}(?:\.\d{0,3})?$
+          nullable: true
+          title: الكمية في المخزن
+        low_stock_threshold:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,7}(?:\.\d{0,3})?$
+          nullable: true
+          title: حد التنبيه
+        stock_unit:
+          type: string
+          title: وحدة المخزن
+          maxLength: 30
+        variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminVariantRequest'
+      required:
+      - category
+      - name
+      - variants
+    AdminVariant:
+      type: object
+      description: 'Read: price/old_price rounded to whole pounds. Write: any positive
+        decimal.'
+      properties:
+        id:
+          type: integer
+        label:
+          type: string
+          title: الوزن/الوحدة
+          maxLength: 40
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          title: السعر
+        old_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        stock_factor:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,3})?$
+          title: معامل المخزن
+        is_default:
+          type: boolean
+          default: false
+        order:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          title: الترتيب
+      required:
+      - label
+      - price
+    AdminVariantRequest:
+      type: object
+      description: 'Read: price/old_price rounded to whole pounds. Write: any positive
+        decimal.'
+      properties:
+        id:
+          type: integer
+        label:
+          type: string
+          minLength: 1
+          title: الوزن/الوحدة
+          maxLength: 40
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          title: السعر
+        old_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        stock_factor:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,3})?$
+          title: معامل المخزن
+        is_default:
+          type: boolean
+          default: false
+        order:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          title: الترتيب
+      required:
+      - label
+      - price
+    AuthResponse:
+      type: object
+      properties:
+        access:
+          type: string
+        refresh:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+      required:
+      - access
+      - refresh
+      - user
+    BundleItemIn:
+      type: object
+      properties:
+        variant_id:
+          type: integer
+        qty:
+          type: integer
+          maximum: 50
+          minimum: 1
+      required:
+      - qty
+      - variant_id
+    BundleItemInRequest:
+      type: object
+      properties:
+        variant_id:
+          type: integer
+        qty:
+          type: integer
+          maximum: 50
+          minimum: 1
+      required:
+      - qty
+      - variant_id
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        slug:
+          type: string
+          title: المعرّف
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        name:
+          type: string
+          title: الاسم
+          maxLength: 80
+        color:
+          type: string
+          title: اللون
+          maxLength: 9
+        icon:
+          type: string
+          title: الأيقونة
+          maxLength: 40
+        order:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          title: الترتيب
+      required:
+      - id
+      - name
+      - slug
+    CategoryBrief:
+      type: object
+      properties:
+        slug:
+          type: string
+          title: المعرّف
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        name:
+          type: string
+          title: الاسم
+          maxLength: 80
+        color:
+          type: string
+          title: اللون
+          maxLength: 9
+        icon:
+          type: string
+          title: الأيقونة
+          maxLength: 40
+      required:
+      - name
+      - slug
+    CodeEnum:
+      enum:
+      - unavailable
+      - not_found
+      - insufficient_stock
+      - offer_expired
+      type: string
+      description: |-
+        * `unavailable` - unavailable
+        * `not_found` - not_found
+        * `insufficient_stock` - insufficient_stock
+        * `offer_expired` - offer_expired
+    Health:
+      type: object
+      properties:
+        status:
+          type: string
+        database:
+          type: string
+      required:
+      - database
+      - status
+    KindEnum:
+      enum:
+      - category
+      - products
+      - all
+      type: string
+      description: |-
+        * `category` - قسم
+        * `products` - منتجات
+        * `all` - الكل
+    LoginRequest:
+      type: object
+      properties:
+        phone:
+          type: string
+          minLength: 1
+      required:
+      - phone
+    LogoutRequest:
+      type: object
+      properties:
+        refresh:
+          type: string
+          minLength: 1
+      required:
+      - refresh
+    LowStockProduct:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        stock_qty:
+          type: number
+          format: double
+        stock_unit:
+          type: string
+      required:
+      - id
+      - name
+      - stock_qty
+      - stock_unit
+    Offer:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        type:
+          allOf:
+          - $ref: '#/components/schemas/TypeEnum'
+          title: النوع
+        name:
+          type: string
+          title: الاسم
+          maxLength: 120
+        description:
+          type: string
+          title: الوصف
+        value:
+          oneOf:
+          - type: number
+            format: double
+          - type: integer
+          nullable: true
+          description: |-
+            Given the *incoming* primitive data, return the value for this field
+            that should be validated and transformed to a native value.
+          readOnly: true
+        target:
+          allOf:
+          - $ref: '#/components/schemas/OfferTarget'
+          readOnly: true
+        bundle_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OfferBundleItem'
+          readOnly: true
+        bundle_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+        old_price:
+          type: integer
+          nullable: true
+          readOnly: true
+        min_order:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+        starts_at:
+          type: string
+          format: date-time
+          title: يبدأ
+        ends_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: ينتهي
+        is_featured:
+          type: boolean
+          title: عرض الأسبوع
+      required:
+      - bundle_items
+      - bundle_price
+      - id
+      - min_order
+      - name
+      - old_price
+      - target
+      - type
+      - value
+    OfferBundleItem:
+      type: object
+      properties:
+        variant_id:
+          type: integer
+        name:
+          type: string
+        qty:
+          type: integer
+      required:
+      - name
+      - qty
+      - variant_id
+    OfferTarget:
+      type: object
+      properties:
+        kind:
+          type: string
+        slug:
+          type: string
+          nullable: true
+        ids:
+          type: array
+          items:
+            type: integer
+      required:
+      - ids
+      - kind
+      - slug
+    Order:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        number:
+          type: integer
+          readOnly: true
+          title: رقم الطلب
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          readOnly: true
+          title: الحالة
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        customer:
+          allOf:
+          - $ref: '#/components/schemas/OrderCustomer'
+          readOnly: true
+        address:
+          type: string
+          readOnly: true
+          title: العنوان
+        area:
+          type: string
+          readOnly: true
+          title: المنطقة
+        notes:
+          type: string
+          readOnly: true
+          title: ملاحظات
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderLine'
+          readOnly: true
+        subtotal:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        discounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderDiscount'
+          readOnly: true
+        discount_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        delivery_fee:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        payment_method:
+          allOf:
+          - $ref: '#/components/schemas/PaymentMethodEnum'
+          readOnly: true
+          title: طريقة الدفع
+      required:
+      - address
+      - area
+      - created_at
+      - customer
+      - delivery_fee
+      - discount_total
+      - discounts
+      - id
+      - lines
+      - notes
+      - number
+      - payment_method
+      - status
+      - subtotal
+      - total
+    OrderCounts:
+      type: object
+      properties:
+        new:
+          type: integer
+        preparing:
+          type: integer
+        out_for_delivery:
+          type: integer
+        delivered:
+          type: integer
+        cancelled:
+          type: integer
+      required:
+      - cancelled
+      - delivered
+      - new
+      - out_for_delivery
+      - preparing
+    OrderCreateRequest:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuoteItemRequest'
+        bundles:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuoteBundleRequest'
+        address:
+          type: string
+          minLength: 10
+          maxLength: 500
+        area:
+          type: string
+          default: ''
+          maxLength: 80
+        notes:
+          type: string
+          default: ''
+          maxLength: 500
+      required:
+      - address
+    OrderCustomer:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+      required:
+      - name
+      - phone
+    OrderDiscount:
+      type: object
+      properties:
+        offer_id:
+          type: integer
+          readOnly: true
+          nullable: true
+        label:
+          type: string
+          title: العرض
+          maxLength: 120
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+      required:
+      - amount
+      - label
+      - offer_id
+    OrderLine:
+      type: object
+      properties:
+        name:
+          type: string
+          title: الاسم
+          maxLength: 160
+        unit_label:
+          type: string
+          title: الوحدة
+          maxLength: 40
+        qty:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          title: الكمية
+        unit_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        line_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        note:
+          type: string
+          title: ملاحظة
+          maxLength: 200
+      required:
+      - line_total
+      - name
+      - qty
+      - unit_price
+    PaginatedAdminCustomerList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminCustomer'
+    PaginatedAdminOrderList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminOrder'
+    PaginatedAdminProductList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminProduct'
+    PaginatedOrderList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+    PaginatedProductList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+    PatchedAdminOfferRequest:
+      type: object
+      properties:
+        type:
+          allOf:
+          - $ref: '#/components/schemas/TypeEnum'
+          title: النوع
+        name:
+          type: string
+          minLength: 1
+          title: الاسم
+          maxLength: 120
+        description:
+          type: string
+          title: الوصف
+        value:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+          nullable: true
+        target:
+          $ref: '#/components/schemas/TargetInRequest'
+        bundle_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BundleItemInRequest'
+        bundle_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        min_order:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        starts_at:
+          type: string
+          format: date-time
+          title: يبدأ
+        ends_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: ينتهي
+        is_featured:
+          type: boolean
+          title: عرض الأسبوع
+        is_active:
+          type: boolean
+          title: شغال
+    PatchedAdminProductRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          title: الاسم
+          maxLength: 120
+        description:
+          type: string
+          title: الوصف
+        image:
+          type: string
+          format: binary
+          nullable: true
+        category:
+          type: integer
+        is_available:
+          type: boolean
+          title: متاح
+        is_featured:
+          type: boolean
+          title: مميز
+        stock_qty:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,7}(?:\.\d{0,3})?$
+          nullable: true
+          title: الكمية في المخزن
+        low_stock_threshold:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,7}(?:\.\d{0,3})?$
+          nullable: true
+          title: حد التنبيه
+        stock_unit:
+          type: string
+          title: وحدة المخزن
+          maxLength: 30
+        variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminVariantRequest'
+    PatchedOrderStatusRequest:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+    PatchedUserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          title: الاسم
+          maxLength: 80
+        email:
+          title: الإيميل
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        default_address:
+          type: string
+          title: العنوان الافتراضي
+        area:
+          type: string
+          title: المنطقة
+          maxLength: 80
+    PaymentMethodEnum:
+      enum:
+      - cod
+      type: string
+      description: '* `cod` - الدفع عند الاستلام'
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        slug:
+          title: المعرّف
+          oneOf:
+          - type: string
+            pattern: ^[-\w]+$
+            maxLength: 160
+          - type: string
+            maxLength: 0
+        name:
+          type: string
+          title: الاسم
+          maxLength: 120
+        description:
+          type: string
+          title: الوصف
+        image:
+          type: string
+          format: uri
+          nullable: true
+          readOnly: true
+        is_available:
+          type: boolean
+          title: متاح
+        is_featured:
+          type: boolean
+          title: مميز
+        category:
+          allOf:
+          - $ref: '#/components/schemas/CategoryBrief'
+          readOnly: true
+        variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/Variant'
+          readOnly: true
+        active_offer:
+          allOf:
+          - $ref: '#/components/schemas/ActiveOffer'
+          nullable: true
+          readOnly: true
+      required:
+      - active_offer
+      - category
+      - id
+      - image
+      - name
+      - variants
+    Quote:
+      type: object
+      properties:
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuoteLine'
+        subtotal:
+          type: integer
+        discounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuoteDiscount'
+        discount_total:
+          type: integer
+        delivery_fee:
+          type: integer
+        free_delivery_threshold:
+          type: integer
+        free_delivery_remaining:
+          type: integer
+        total:
+          type: integer
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuoteWarning'
+      required:
+      - delivery_fee
+      - discount_total
+      - discounts
+      - free_delivery_remaining
+      - free_delivery_threshold
+      - lines
+      - subtotal
+      - total
+      - warnings
+    QuoteBundleRequest:
+      type: object
+      properties:
+        offer_id:
+          type: integer
+        qty:
+          type: integer
+          maximum: 50
+          minimum: 1
+      required:
+      - offer_id
+      - qty
+    QuoteDiscount:
+      type: object
+      properties:
+        offer_id:
+          type: integer
+        label:
+          type: string
+        amount:
+          type: integer
+      required:
+      - amount
+      - label
+      - offer_id
+    QuoteItemRequest:
+      type: object
+      properties:
+        variant_id:
+          type: integer
+        qty:
+          type: integer
+          maximum: 50
+          minimum: 1
+        note:
+          type: string
+          default: ''
+          maxLength: 200
+      required:
+      - qty
+      - variant_id
+    QuoteLine:
+      type: object
+      properties:
+        variant_id:
+          type: integer
+          nullable: true
+        offer_id:
+          type: integer
+          nullable: true
+        name:
+          type: string
+        unit_label:
+          type: string
+        qty:
+          type: integer
+        unit_price:
+          type: integer
+        line_total:
+          type: integer
+      required:
+      - line_total
+      - name
+      - offer_id
+      - qty
+      - unit_label
+      - unit_price
+      - variant_id
+    QuoteRequestRequest:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuoteItemRequest'
+        bundles:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuoteBundleRequest'
+    QuoteWarning:
+      type: object
+      properties:
+        variant_id:
+          type: integer
+          nullable: true
+        offer_id:
+          type: integer
+        code:
+          $ref: '#/components/schemas/CodeEnum'
+        detail:
+          type: string
+      required:
+      - code
+      - detail
+      - variant_id
+    Refresh:
+      type: object
+      properties:
+        refresh:
+          type: string
+        access:
+          type: string
+          readOnly: true
+      required:
+      - access
+      - refresh
+    RefreshRequest:
+      type: object
+      properties:
+        refresh:
+          type: string
+          minLength: 1
+      required:
+      - refresh
+    RegisterRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 80
+        phone:
+          type: string
+          minLength: 1
+        email:
+          oneOf:
+          - type: string
+            format: email
+          - type: string
+            maxLength: 0
+      required:
+      - name
+      - phone
+    ShopSettings:
+      type: object
+      properties:
+        shop_name:
+          type: string
+          title: اسم المحل
+          maxLength: 80
+        phone:
+          type: string
+          title: التليفون
+          maxLength: 20
+        whatsapp:
+          type: string
+          title: واتساب
+          maxLength: 20
+        delivery_fee:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        free_delivery_threshold:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        currency:
+          type: string
+          readOnly: true
+        is_accepting_orders:
+          type: boolean
+          title: بياخد طلبات
+      required:
+      - currency
+      - delivery_fee
+      - free_delivery_threshold
+    StatusEnum:
+      enum:
+      - new
+      - preparing
+      - out_for_delivery
+      - delivered
+      - cancelled
+      type: string
+      description: |-
+        * `new` - جديد
+        * `preparing` - بيتجهز
+        * `out_for_delivery` - في الطريق
+        * `delivered` - اتسلم
+        * `cancelled` - اتلغى
+    TargetIn:
+      type: object
+      properties:
+        kind:
+          $ref: '#/components/schemas/KindEnum'
+        slug:
+          type: string
+          nullable: true
+        ids:
+          type: array
+          items:
+            type: integer
+      required:
+      - kind
+    TargetInRequest:
+      type: object
+      properties:
+        kind:
+          $ref: '#/components/schemas/KindEnum'
+        slug:
+          type: string
+          nullable: true
+        ids:
+          type: array
+          items:
+            type: integer
+      required:
+      - kind
+    TypeEnum:
+      enum:
+      - percentage
+      - bundle
+      - free_delivery
+      type: string
+      description: |-
+        * `percentage` - نسبة خصم
+        * `bundle` - باكدج
+        * `free_delivery` - توصيل مجاني
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: الاسم
+          maxLength: 80
+          minLength: 2
+        phone:
+          type: string
+          readOnly: true
+          title: الموبايل
+        email:
+          title: الإيميل
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        default_address:
+          type: string
+          title: العنوان الافتراضي
+        area:
+          type: string
+          title: المنطقة
+          maxLength: 80
+        is_staff:
+          type: boolean
+          readOnly: true
+          title: موظف
+      required:
+      - id
+      - is_staff
+      - name
+      - phone
+    Variant:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        label:
+          type: string
+          title: الوزن/الوحدة
+          maxLength: 40
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        old_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+        is_default:
+          type: boolean
+          title: الافتراضي
+      required:
+      - id
+      - label
+      - old_price
+      - price
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

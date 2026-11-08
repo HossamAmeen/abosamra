@@ -1,0 +1,46 @@
+@import '@fontsource/cairo/arabic-400.css';
+@import '@fontsource/cairo/arabic-700.css';
+@import '@fontsource/cairo/arabic-800.css';
+@import '@fontsource/cairo/latin-400.css';
+@import '@fontsource/cairo/latin-700.css';
+@import '@fontsource/cairo/latin-800.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Cairo', system-ui, sans-serif;
+    background: #fff8f1;
+    color: #3b2412;
+    font-size: 15px;
+  }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: #fff8f1;
+  }
+  :focus-visible {
+    outline: 2px solid #a3510f;
+    outline-offset: 2px;
+  }
+  button,
+  input,
+  textarea,
+  select {
+    font-family: inherit;
+  }
+}
+
+@layer utilities {
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}

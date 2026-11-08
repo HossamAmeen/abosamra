@@ -1,0 +1,62 @@
+# Fix tasks from PA review (2026-11-08)
+
+Severity: blocker | major | minor. "Blocking" = must be done before PA-05 sign-off.
+
+| ID | Owner | Severity | Blocking | Title | Repro | Acceptance |
+|---|---|---|---|---|---|---|
+| FIX-01 | frontend-dev | minor (failing test) | yes | QA-F01: admin offer form shows validation error before input | Log in as admin (01099999999 / admin123 in mocks), open `/admin/offers`; the "على" select is red with "اختار القسم" immediately (compare/12-admin-offers.png). `npm run e2e` -> `admin.spec.ts` "offer form shows no validation error before the user submits (QA-F01)" fails | Pristine form has no error; errors appear only after pressing "نشر العرض"; that e2e test passes (52/52); vitest/lint/type-check still green |
+| FIX-02 | frontend-dev | major | yes | Bundle card shows struck-through old price lower than the bundle price | Real API: `/offers/active/` bundle price 290, old_price 175. `views/store/Offers.vue` line ~114 renders `old_price` without the `> price` guard that `PriceTag` has (mock hides it by using 335) | Old price only shown when `old_price > bundle_price` (reuse PriceTag logic); unit test with old_price < price; cart bundle line unaffected |
+| FIX-03 | backend-dev | major | yes | Seed bundle "باكدج الشتا" price is above the sum of its items | `seed_abo_samra` then `GET /offers/active/`: bundle_price 290, old_price 175 (items 50+65+60). BSPEC 7 literal number, flagged by leader as inconsistent | Owner-approved placeholder (ask user via leader) at or below 175 (for example 160) or items changed so the sum exceeds 290; update seed test, openapi example if any; note in REVIEW_LOG |
+| FIX-04 | frontend-dev | minor | no | Products discounted only by an offer % are missing from "عروض النهاردة" and "منتجات عليها خصم" | Seed, open `/` and `/offers`: lists show only 4 compare_at products; cumin/turmeric/cinnamon (15% spices offer, returned by `?discounted=true` and carrying `active_offer`) are filtered out by `discountPercent(p) > 0` | Lists include products with `active_offer` (backend already returns 7); card badge rule stays old_price-only per design; offer-only items show the offer percentage somewhere compatible with the design (leader/owner to pick, for example a small "خصم 15%" caption); e2e or vitest covers it |
+| FIX-05 | frontend-dev | minor | no | Per-line notes folded into order notes | Add cumin with note "ناعم" and order. `Cart.vue` builds `notes = "name: note"`; `OrderLine.note` stays empty. Backend accepts `items[].note` (PA: POST /orders/ with `note` -> 201, `lines[0].note="ناعم"`) | Order payload sends `note` per item line; admin order sheet shows the per-line note; type/mocks updated; order-level notes unchanged. If leader prefers to keep FSPEC 9 literal payload, record the ruling and close |
+| FIX-06 | frontend-dev | minor | no | Offer cards repeat the headline as a second line | `/admin/offers` current-offers cards: "15% على كل البهارات" then "خصم 15% على كل البهارات"; free-delivery card "توصيل مجاني فوق 500 ج.م" then "توصيل مجاني" (compare/12) | Second line shown only when the owner name is not contained in the derived headline |
+| FIX-07 | backend-dev | minor | no | Invalid-transition message uses raw status codes | `PATCH /admin/orders/{id}/ {"status":"delivered"}` on a new order -> `مينفعش تغيّر الحالة من new لـ delivered` | Message uses Arabic labels (جديد، بيتجهز، في الطريق، اتسلم، اتلغى), keeps `code: invalid_transition`; tests updated; leader confirms deviation from literal `{from}` in BSPEC 4.5 |
+| FIX-08 | test-agent | minor | yes (for PA-05) | CP-P3 and admin accessibility not covered | No test for install prompt after 2nd visit, "نزّل تطبيق أبو سمرة على موبايلك" card with تثبيت / مش دلوقتي, iOS sheet, update toast "فيه نسخة جديدة / تحديث"; axe never run on `/admin/*` | Playwright (or vitest) specs for the four P3 behaviours; axe A/AA on admin dashboard, orders, products, product form, offers, customers; results in QA_FINDINGS |
+| FIX-09 | frontend-dev + test-agent | major | yes (for PA-05) | No run of the Vue app against the real backend (FE-14, QA-05, QA-06 open) | `VITE_USE_MOCKS=false` against `runserver` + seed never done; leader note: admin product `category` is an object in the real API (PA saw `{id,slug,name,color,icon}`) while openapi types say int; admin customers/offers shapes differ from mocks | FE-14 and QA-06 complete on a local non-Docker backend: full order flow, stock decrement and cancel restore visible via API, no contract mismatch; types fixed; Lighthouse PWA/A11y/Perf figures recorded |
+| FIX-10 | backend-dev | minor | no | DRF default validation messages are formal Arabic, not Egyptian | `PATCH /admin/orders/{id}/ {}` -> `{"status":["هذا الحقل مطلوب."]}` (required/blank/invalid-choice/not-a-number messages untranslated to Egyptian) | Common override for the generic DRF field errors (required, blank, null, invalid) in Egyptian Arabic; pytest asserts one message |
+| FIX-11 | backend-dev | minor | no | Unknown `?status=` on `/admin/orders/` returns 200 with empty page | `GET /admin/orders/?status=zzz` -> 200 `count 0` | 400 with an Arabic field error (or documented as intentional); test |
+| FIX-12 | test-agent | minor | no | Postgres-only behaviour unverified (order number sequence, query counts) | PA could only run sqlite (no Docker); B4.6 UNVERIFIED | When a PostgreSQL is available (non-Docker local or staging), run the order-number test and a 3-concurrent-order check; record in REVIEW_LOG |
+
+Includes QA-F01 as FIX-01. No new blockers on the backend: all BSPEC 4.1-4.6 behaviours passed.
+
+Notes: FIX-03, FIX-07, FIX-11 done (in-review) by backend-dev. FIX-03: seed bundle price 160 (get_or_create does not overwrite existing DB rows; reseed fresh or edit in admin). FIX-07: message now uses Arabic labels, deviates from literal `{from}` of BSPEC 4.5 (leader to confirm). FIX-11: unknown `?status=` -> 400 `{"status": ["الحالة دي مش موجودة"]}`. FIX-10/FIX-12 deferred.
+
+## Frontend status (frontend-dev, 2026-11-08)
+
+- FIX-01: done (in-review). Offer form errors are shown only after the first submit (`submitCount > 0`); e2e QA-F01 passes.
+- FIX-02: done (in-review). Bundle `old_price` rendered only when `> bundle_price`; vitest in `storefront.spec.ts`.
+- FIX-04: done (in-review). `isDiscounted()` (old price OR `active_offer`) feeds "عروض النهاردة" and "منتجات عليها خصم"; offer-only cards show a small green caption "خصم 15%" under the weight (badge rule unchanged); vitest asserts it. Owner may still choose a different caption.
+- FIX-05: done (in-review). `POST /orders/` sends `items[].note` (trimmed, max 200) via `cart.orderBody()`; the quote request stays note-free; no folding into order `notes`; the admin order sheet shows per-line notes; mock handler/type updated; vitest + verified against the real API (`lines[].note = "ناعم"`).
+- FIX-06: done (in-review). Second name line shown only when neither the name nor the derived headline contains the other.
+- FIX-09 / FE-14: in-review (frontend half). Ran the Vue app against the real backend (sqlite in /tmp, seeded, CORS for the vite origin, `VITE_USE_MOCKS=false`) headless at 390px: browse, reference quote 435/32/30/433/97, register, order (note on line), success #1001, admin login (wrong + right), full status chain, product create (3 weights + image, served under /media/), offer create + pause, customers search; stock decrement (10 -> 9.25 for 3 x quarter-kilo) and cancel restore (-> 10) verified via API. No frontend/contract mismatches found (types already match: product `category` object, customers, offers, multipart `variants` JSON string). No horizontal overflow at 360px on 12 screens. Lighthouse not run (no Lighthouse tooling available); left to QA-06.
+- `npm audit`: `npm audit fix` changes nothing. Remaining high advisories: `zod` < 4.6.6 (GHSA-mrhx-c7xc-m3w5, memory exhaustion on oversized constrained collections; no fix on zod 3, and `@vee-validate/zod` 4.15 does not support zod 4). Accepted risk: zod only validates our own small admin/customer forms client-side, never untrusted large payloads. Other findings are dev-tooling only (eslint/typescript-eslint/minimatch chain). Revisit when vee-validate ships zod 4 support.
+
+## Test agent status (2026-11-08)
+- FIX-08: in-review. `frontend/e2e/p3.pwa.spec.ts` (4 tests: install card on 2nd visit + تثبيت / مش دلوقتي, iOS Safari sheet, update toast via a real SW update: sw.js made byte-different in `dist/e2e-pwa`, restored afterwards) and `frontend/e2e/admin-a11y.spec.ts` (axe WCAG 2.0/2.1 A+AA on admin login, dashboard, orders, products, product form new + edit, offers, customers: 0 violations).
+- QA-05: in-review. New `backend/apps/core/tests/test_api_journeys.py`, `test_permission_matrix.py`, `test_query_scaling.py`, `test_concurrency_postgres.py` (skipped without PostgreSQL).
+- QA-06 / FIX-09 (test half): in-review. `npm run e2e:real` runs 4 journeys against the real backend; Lighthouse figures and two new findings (QA-F02, QA-F03) in QA_FINDINGS.md. FIX-12 stays open: the 3-concurrent-order test is written but could not be run (no PostgreSQL available).
+- QA-F02: done (in-review). Lighthouse 13 mobile, prod build via vite preview + real backend, 3 runs per page: `/` 79-80 -> 92-95, `/categories/spices` 88-90 -> 93-96, `/products/:slug` 93-94 -> 96-97, `/offers` 65-68 -> 92-96, `/cart` 94-98 -> 98. Changes: boot-time prefetch of storefront data (categories, offers, settings, landing-route products), cached `Intl.NumberFormat` in `formatMoney`, no initial `scrollTo`, progressive rendering of product lists, no empty-state/CLS flash on `/offers`, Cairo 600 weight dropped + critical fonts preloaded, SW registration deferred to idle, unused dayjs removed.
+- QA-F03: done (in-review). Single `<main>` in StoreLayout and AdminLayout; the duplicate image link in `ProductCard` is hidden from assistive tech (aria-hidden, tabindex -1) so the card link's accessible name is its visible name; add button keeps `أضف {name} للسلة`. Note: "two أضف للسلة buttons on the honey page" is not a bug (product page has exactly one add button, in the fixed bottom bar; the second was the category-list stepper card button during navigation).
+
+
+## Final status (PA final re-review, 2026-11-08)
+
+Verified by PA's own runs (fresh sqlite + seed + runserver + vite prod build with mocks off; pytest, e2e, e2e:real, Lighthouse).
+
+| ID | Final status | Evidence |
+|---|---|---|
+| FIX-01 | DONE, verified | e2e QA-F01 test green; compare/12 pristine form has no error |
+| FIX-02 | DONE, verified | old price guarded `> price`; vitest; real bundle 160 vs 175 |
+| FIX-03 | DONE, verified | fresh seed `/offers/active/`: bundle_price 160, old_price 175 |
+| FIX-04 | DONE, verified | offer-only products listed with "خصم 15%" caption (compare/01, 04); vitest |
+| FIX-05 | DONE, verified | POST /orders/ item `note` -> `lines[0].note="ناعم"` on real API; e2e:real |
+| FIX-06 | DONE, verified | compare/12 single headline line |
+| FIX-07 | DONE, verified | PATCH new->delivered: `مينفعش تغيّر الحالة من جديد لـ اتسلم`, code `invalid_transition` |
+| FIX-08 | DONE, verified | e2e 64/64 incl. p3.pwa (4) and admin-a11y (8 screens) |
+| FIX-09 | DONE, verified | e2e:real 4/4; own Lighthouse: a11y 100 on all runs; perf medians >= 92 (see REVIEW_LOG) |
+| FIX-10 | DEFERRED, ruled NON-BLOCKING | Re-tested: `PATCH /admin/orders/1/ {}` -> `{"status":["هذا الحقل مطلوب."]}` (formal Arabic). Only reachable on staff admin API with an empty body the UI never sends; every customer-facing path (register, login, quote, orders) returns Egyptian messages (verified: `اكتب اسمك`, `اكتب رقم الموبايل`, `اكتب الكمية`). Violates the letter of the "all errors Egyptian" rule: should be picked up in the next backend round. |
+| FIX-11 | DONE, verified | `?status=zzz` -> 400 `{"status":["الحالة دي مش موجودة"]}` |
+| FIX-12 | UNVERIFIED-accepted risk, NON-BLOCKING | No postgres/pg_ctl/initdb on host and no Docker. Order numbering sqlite path verified; `test_concurrency_postgres.py` exists (skipped locally). Must run on staging before production: that test against Postgres, plus 3 concurrent POST /orders/ giving distinct consecutive numbers from 1001 |
+| QA-F01 | DONE (= FIX-01) | |
+| QA-F02 | DONE, verified | PA Lighthouse 13.6 mobile: perf `/` 93/89/92, `/categories/spices` 95/96/90, `/products/cumin` 98/97/97, `/offers` 90/94/94, `/cart` 98/96/98 |
+| QA-F03 | DONE, verified | Lighthouse a11y 100 on all 15 runs (was 98); axe e2e green |

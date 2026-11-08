@@ -1,0 +1,33 @@
+# env / secrets
+.env
+.env.*
+!.env.example
+deploy/config.yml
+
+# python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+db.sqlite3
+backend/staticfiles/
+backend/media/
+backend/backups/
+media/
+
+# node
+node_modules/
+frontend/dist/
+*.tsbuildinfo
+frontend/coverage/
+frontend/playwright-report/
+frontend/test-results/
+
+# os / editor
+.DS_Store
+.idea/
+.vscode/
+deploy/

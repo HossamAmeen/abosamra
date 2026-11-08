@@ -1,0 +1,17 @@
+.venv/
+.env
+__pycache__/
+*.pyc
+db.sqlite3
+.coverage
+htmlcov/
+.pytest_cache/
+.ruff_cache/
+staticfiles/
+media/
+backups/
+
+# secrets
+secrets/
+*service-account*.json
+*-sa.json
