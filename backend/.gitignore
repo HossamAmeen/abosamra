@@ -9,7 +9,7 @@ htmlcov/
 .ruff_cache/
 staticfiles/
 media/
-backups/
+/backups/
 
 # secrets
 secrets/
