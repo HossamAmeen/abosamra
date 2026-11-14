@@ -16,6 +16,17 @@ def register_customer(name, phone, email=""):
     return User.objects.create_user(phone=phone, name=name, email=email)
 
 
+def staff_phone_exists_error():
+    return ApiError("الرقم ده مسجل قبل كده", "phone_exists", status.HTTP_409_CONFLICT)
+
+
+def create_staff(name, phone, password):
+    """New dashboard admin, with the same rights as the seeded owner account."""
+    if User.objects.filter(phone=phone).exists():
+        raise staff_phone_exists_error()
+    return User.objects.create_superuser(phone=phone, name=name, password=password)
+
+
 def get_customer_by_phone(phone):
     user = User.objects.filter(phone=phone, is_active=True, is_staff=False).first()
     if user is None:

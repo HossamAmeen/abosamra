@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { categories } from '../data'
 import type { AdminOfferInput, OrderStatus } from '@/types/api'
-import { normalizePhone } from '@/utils/phone'
+import { isValidPhone, normalizePhone } from '@/utils/phone'
 import { db, type DbOffer, type DbProduct } from '../db'
 import { detail, paginate, requireStaff, url } from './util'
 
@@ -367,6 +367,51 @@ export const adminHandlers = [
         request,
         own.map((o) => db.serializeAdminOrder(o)),
       ),
+    )
+  }),
+
+  // ---- staff ----
+  http.get(url('/admin/staff/'), ({ request }) => {
+    const auth = requireStaff(request)
+    if ('error' in auth) return auth.error
+    const staff = db.users
+      .filter((u) => u.is_staff)
+      .map((u) => ({ id: u.id, name: u.name, phone: u.phone, date_joined: u.created_at }))
+    return HttpResponse.json(paginate(request, staff))
+  }),
+
+  http.post(url('/admin/staff/'), async ({ request }) => {
+    const auth = requireStaff(request)
+    if ('error' in auth) return auth.error
+    const b = (await request.json()) as { name?: string; phone?: string; password?: string }
+    const errors: Record<string, string[]> = {}
+    const name = (b.name ?? '').trim()
+    const password = b.password ?? ''
+    if (name.length < 2 || name.length > 80) errors.name = ['الاسم لازم يكون حرفين على الأقل']
+    if (!isValidPhone(b.phone ?? ''))
+      errors.phone = ['اكتب رقم موبايل مصري صحيح (11 رقم يبدأ بـ 01)']
+    if (password.length < 8) errors.password = ['كلمة السر لازم تكون 8 حروف على الأقل']
+    else if (/^\d+$/.test(password)) errors.password = ['كلمة السر مينفعش تكون أرقام بس']
+    if (Object.keys(errors).length) return HttpResponse.json(errors, { status: 400 })
+    const phone = normalizePhone(b.phone!)
+    if (db.users.some((u) => u.phone === phone)) {
+      return detail(409, 'الرقم ده مسجل قبل كده', 'phone_exists')
+    }
+    const user = {
+      id: db.nextId('user'),
+      name,
+      phone,
+      email: '',
+      default_address: '',
+      area: '',
+      is_staff: true,
+      password,
+      created_at: new Date().toISOString(),
+    }
+    db.users.push(user)
+    return HttpResponse.json(
+      { id: user.id, name, phone, date_joined: user.created_at },
+      { status: 201 },
     )
   }),
 ]

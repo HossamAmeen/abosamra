@@ -74,6 +74,7 @@ export const routes = [
         name: 'admin-customers',
         component: () => import('@/views/admin/Customers.vue'),
       },
+      { path: 'staff', name: 'admin-staff', component: () => import('@/views/admin/Staff.vue') },
     ],
   },
   { path: '/:pathMatch(.*)*', redirect: '/' },

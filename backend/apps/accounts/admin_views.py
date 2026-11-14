@@ -1,18 +1,20 @@
 from decimal import Decimal
 
+from django.db import IntegrityError
 from django.db.models import Count, DecimalField, F, Max, Q, Sum, Value
 from django.db.models.functions import Coalesce
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import serializers
-from rest_framework.generics import ListAPIView, get_object_or_404
+from rest_framework.generics import ListAPIView, ListCreateAPIView, get_object_or_404
 from rest_framework.permissions import IsAdminUser
 
 from apps.orders.admin_views import AdminOrderSerializer
 from apps.orders.models import Order
 from apps.orders.views import order_queryset
-from common.fields import MoneyField
+from common.fields import MoneyField, PhoneField
 from common.phone import try_normalize_phone
 
+from . import services
 from .models import User
 
 
@@ -72,3 +74,56 @@ class AdminCustomerOrdersView(ListAPIView):
     def get_queryset(self):
         customer = get_object_or_404(User, pk=self.kwargs["pk"], is_staff=False)
         return order_queryset().filter(customer=customer).order_by("-created_at", "-id")
+
+
+NAME_ERRORS = {
+    "min_length": "الاسم لازم يكون حرفين على الأقل",
+    "max_length": "الاسم طويل أوي (80 حرف بحد أقصى)",
+    "required": "اكتب الاسم",
+    "blank": "اكتب الاسم",
+}
+PASSWORD_ERRORS = {
+    "min_length": "كلمة السر لازم تكون 8 حروف على الأقل",
+    "max_length": "كلمة السر طويلة أوي",
+    "required": "اكتب كلمة السر",
+    "blank": "اكتب كلمة السر",
+}
+
+
+class AdminStaffSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(min_length=2, max_length=80, error_messages=NAME_ERRORS)
+    phone = PhoneField()
+    password = serializers.CharField(
+        write_only=True,
+        min_length=8,
+        max_length=128,
+        trim_whitespace=False,
+        error_messages=PASSWORD_ERRORS,
+    )
+
+    class Meta:
+        model = User
+        fields = ["id", "name", "phone", "password", "date_joined"]
+        read_only_fields = ["id", "date_joined"]
+
+    def validate_password(self, value):
+        if value.isdigit():
+            raise serializers.ValidationError("كلمة السر مينفعش تكون أرقام بس")
+        return value
+
+    def create(self, validated_data):
+        try:
+            return services.create_staff(**validated_data)
+        except IntegrityError as exc:  # concurrent duplicate
+            raise services.staff_phone_exists_error() from exc
+
+
+class AdminStaffListCreateView(ListCreateAPIView):
+    """Staff accounts that can sign in to the dashboard; POST adds a new one."""
+
+    permission_classes = [IsAdminUser]
+    serializer_class = AdminStaffSerializer
+    filter_backends: list = []
+
+    def get_queryset(self):
+        return User.objects.filter(is_staff=True, is_active=True).order_by("date_joined", "id")

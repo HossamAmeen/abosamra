@@ -17,6 +17,7 @@ import Products from './Products.vue'
 import ProductForm from './ProductForm.vue'
 import Offers from './Offers.vue'
 import Customers from './Customers.vue'
+import Staff from './Staff.vue'
 
 async function mountAt(component: Component, path: string, asAdmin = true) {
   const pinia = createPinia()
@@ -80,6 +81,48 @@ describe('admin guard + login', () => {
     await settle()
     expect(wrapper.text()).toContain('اكتب رقم موبايل صحيح')
     expect(wrapper.text()).toContain('اكتب كلمة السر')
+  })
+
+  it('toggles password visibility with the eye button', async () => {
+    const { wrapper } = await mountAt(Login, '/admin/login', false)
+    const input = wrapper.get('input[autocomplete="current-password"]')
+    expect(input.attributes('type')).toBe('password')
+    const eye = wrapper.get('button[aria-label="اظهر كلمة السر"]')
+    await eye.trigger('click')
+    expect(input.attributes('type')).toBe('text')
+    expect(eye.attributes('aria-pressed')).toBe('true')
+    await wrapper.get('button[aria-label="اخفي كلمة السر"]').trigger('click')
+    expect(input.attributes('type')).toBe('password')
+  })
+})
+
+describe('Staff', () => {
+  it('lists admins and adds a new one who can then log in', async () => {
+    const { wrapper } = await mountAt(Staff, '/admin/staff')
+    expect(wrapper.text()).toContain('أبو سمرة')
+    expect(wrapper.text()).toContain('(إنت)')
+    await byText(wrapper, 'button', 'إضافة أدمن')!.trigger('click')
+    const form = () => wrapper.get('[role=dialog] form')
+    await form().trigger('submit')
+    await settle()
+    expect(wrapper.text()).toContain('كلمة السر لازم تكون 8 حروف على الأقل')
+    const inputs = wrapper.findAll('[role=dialog] input')
+    await inputs[0]!.setValue('محمود')
+    await inputs[1]!.setValue(MOCK_ADMIN.phone)
+    await inputs[2]!.setValue('strong-pass-1')
+    await form().trigger('submit')
+    await settle()
+    expect(wrapper.text()).toContain('الرقم ده مسجل قبل كده')
+    await inputs[1]!.setValue('01220001111')
+    await form().trigger('submit')
+    await settle()
+    expect(wrapper.find('[role=dialog]').exists()).toBe(false)
+    expect(wrapper.text()).toContain('محمود')
+    const added = db.users.find((u) => u.phone === '01220001111')!
+    expect(added.is_staff).toBe(true)
+    setActivePinia(createPinia())
+    await useAuthStore().adminLogin('01220001111', 'strong-pass-1')
+    expect(useAuthStore().isStaff).toBe(true)
   })
 })
 

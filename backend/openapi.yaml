@@ -427,6 +427,56 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/admin/staff/:
+    get:
+      operationId: v1_admin_staff_list
+      description: Staff accounts that can sign in to the dashboard; POST adds a new
+        one.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: رقم الصفحة ضمن النتائج المقسمة.
+        schema:
+          type: integer
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdminStaffList'
+          description: ''
+    post:
+      operationId: v1_admin_staff_create
+      description: Staff accounts that can sign in to the dashboard; POST adds a new
+        one.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminStaffRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminStaffRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminStaffRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminStaff'
+          description: ''
   /api/v1/auth/admin/login/:
     post:
       operationId: v1_auth_admin_login_create
@@ -1258,6 +1308,47 @@ components:
       - category
       - name
       - variants
+    AdminStaff:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 80
+          minLength: 2
+        phone:
+          type: string
+        date_joined:
+          type: string
+          format: date-time
+          readOnly: true
+          title: تاريخ التسجيل
+      required:
+      - date_joined
+      - id
+      - name
+      - phone
+    AdminStaffRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 80
+        phone:
+          type: string
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 8
+          maxLength: 128
+      required:
+      - name
+      - password
+      - phone
     AdminVariant:
       type: object
       description: 'Read: price/old_price rounded to whole pounds. Write: any positive
@@ -1861,6 +1952,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AdminProduct'
+    PaginatedAdminStaffList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminStaff'
     PaginatedOrderList:
       type: object
       required:

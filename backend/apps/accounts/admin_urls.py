@@ -9,4 +9,5 @@ urlpatterns = [
         v.AdminCustomerOrdersView.as_view(),
         name="admin-customer-orders",
     ),
+    path("staff/", v.AdminStaffListCreateView.as_view(), name="admin-staff-list"),
 ]

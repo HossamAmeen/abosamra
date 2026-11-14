@@ -302,6 +302,19 @@ export interface AdminOfferInput {
   is_active?: boolean
 }
 
+export interface AdminStaff {
+  id: number
+  name: string
+  phone: string
+  date_joined: string
+}
+
+export interface AdminStaffInput {
+  name: string
+  phone: string
+  password: string
+}
+
 export interface AdminCustomer {
   id: number
   name: string
