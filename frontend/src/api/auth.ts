@@ -12,3 +12,5 @@ export const getMe = () => api.get<User>('/me/').then((r) => r.data)
 export const updateMe = (
   body: Partial<Pick<User, 'name' | 'email' | 'default_address' | 'area'>>,
 ) => api.patch<User>('/me/', body).then((r) => r.data)
+export const changeAdminPassword = (body: { current_password: string; new_password: string }) =>
+  api.post('/admin/me/password/', body)

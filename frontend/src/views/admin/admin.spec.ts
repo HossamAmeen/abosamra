@@ -18,6 +18,7 @@ import ProductForm from './ProductForm.vue'
 import Offers from './Offers.vue'
 import Customers from './Customers.vue'
 import Staff from './Staff.vue'
+import Profile from './Profile.vue'
 
 async function mountAt(component: Component, path: string, asAdmin = true) {
   const pinia = createPinia()
@@ -326,5 +327,34 @@ describe('Customers', () => {
     await settle()
     expect(wrapper.text()).not.toContain('محمد أحمد')
     expect(wrapper.text()).toContain('بدون إيميل')
+  })
+})
+
+describe('Profile', () => {
+  it('renames the admin, changes the password and logs out', async () => {
+    const { wrapper, router } = await mountAt(Profile, '/admin/profile')
+    expect(wrapper.text()).toContain('أبو سمرة')
+    expect(wrapper.text()).toContain('إصدار التطبيق 1.2.3')
+
+    await wrapper.get('input[aria-label="الاسم"]').setValue('الحاج أبو سمرة')
+    await byText(wrapper, 'button', 'حفظ الاسم')!.trigger('click')
+    await settle()
+    expect(useAuthStore().user?.name).toBe('الحاج أبو سمرة')
+
+    const [current, next] = wrapper.findAll('input[type="password"]')
+    await current!.setValue('wrong-pass')
+    await next!.setValue('brand-new-pass')
+    await byText(wrapper, 'button', 'تغيير كلمة السر')!.trigger('click')
+    await settle()
+    expect(wrapper.text()).toContain('كلمة السر الحالية غلط')
+    await current!.setValue(MOCK_ADMIN.password)
+    await byText(wrapper, 'button', 'تغيير كلمة السر')!.trigger('click')
+    await settle()
+    expect(db.users.find((u) => u.phone === MOCK_ADMIN.phone)!.password).toBe('brand-new-pass')
+
+    await byText(wrapper, 'button', 'تسجيل خروج')!.trigger('click')
+    await settle()
+    expect(useAuthStore().isLoggedIn).toBe(false)
+    expect(router.currentRoute.value.name).toBe('admin-login')
   })
 })

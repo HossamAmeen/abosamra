@@ -10,4 +10,5 @@ urlpatterns = [
         name="admin-customer-orders",
     ),
     path("staff/", v.AdminStaffListCreateView.as_view(), name="admin-staff-list"),
+    path("me/password/", v.AdminChangePasswordView.as_view(), name="admin-change-password"),
 ]

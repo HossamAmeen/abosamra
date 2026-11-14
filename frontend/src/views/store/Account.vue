@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { APP_VERSION } from '@/composables/useAppUpdate'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { apiError } from '@/api/client'
@@ -172,6 +173,9 @@ async function logout() {
       >
         تسجيل خروج
       </button>
+      <p class="self-center text-[12px] font-semibold text-muted">
+        إصدار التطبيق {{ APP_VERSION }}
+      </p>
     </div>
 
     <!-- guest -->

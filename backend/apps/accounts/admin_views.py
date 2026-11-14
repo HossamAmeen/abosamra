@@ -3,16 +3,19 @@ from decimal import Decimal
 from django.db import IntegrityError
 from django.db.models import Count, DecimalField, F, Max, Q, Sum, Value
 from django.db.models.functions import Coalesce
-from drf_spectacular.utils import OpenApiParameter, extend_schema
-from rest_framework import serializers
+from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
+from rest_framework import serializers, status
 from rest_framework.generics import ListAPIView, ListCreateAPIView, get_object_or_404
 from rest_framework.permissions import IsAdminUser
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from apps.orders.admin_views import AdminOrderSerializer
 from apps.orders.models import Order
 from apps.orders.views import order_queryset
 from common.fields import MoneyField, PhoneField
 from common.phone import try_normalize_phone
+from common.throttling import SensitiveRateThrottle
 
 from . import services
 from .models import User
@@ -90,26 +93,33 @@ PASSWORD_ERRORS = {
 }
 
 
+class StaffPasswordField(serializers.CharField):
+    """A new staff password: 8+ characters, not digits only."""
+
+    def __init__(self, **kwargs):
+        kwargs.setdefault("write_only", True)
+        kwargs.setdefault("min_length", 8)
+        kwargs.setdefault("max_length", 128)
+        kwargs.setdefault("trim_whitespace", False)
+        kwargs.setdefault("error_messages", PASSWORD_ERRORS)
+        super().__init__(**kwargs)
+
+    def to_internal_value(self, data):
+        value = super().to_internal_value(data)
+        if value.isdigit():
+            raise serializers.ValidationError("كلمة السر مينفعش تكون أرقام بس")
+        return value
+
+
 class AdminStaffSerializer(serializers.ModelSerializer):
     name = serializers.CharField(min_length=2, max_length=80, error_messages=NAME_ERRORS)
     phone = PhoneField()
-    password = serializers.CharField(
-        write_only=True,
-        min_length=8,
-        max_length=128,
-        trim_whitespace=False,
-        error_messages=PASSWORD_ERRORS,
-    )
+    password = StaffPasswordField()
 
     class Meta:
         model = User
         fields = ["id", "name", "phone", "password", "date_joined"]
         read_only_fields = ["id", "date_joined"]
-
-    def validate_password(self, value):
-        if value.isdigit():
-            raise serializers.ValidationError("كلمة السر مينفعش تكون أرقام بس")
-        return value
 
     def create(self, validated_data):
         try:
@@ -127,3 +137,42 @@ class AdminStaffListCreateView(ListCreateAPIView):
 
     def get_queryset(self):
         return User.objects.filter(is_staff=True, is_active=True).order_by("date_joined", "id")
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(
+        write_only=True,
+        trim_whitespace=False,
+        error_messages={"required": "اكتب كلمة السر الحالية", "blank": "اكتب كلمة السر الحالية"},
+    )
+    new_password = StaffPasswordField()
+
+    def validate_current_password(self, value):
+        if not self.context["request"].user.check_password(value):
+            raise serializers.ValidationError("كلمة السر الحالية غلط")
+        return value
+
+    def validate(self, attrs):
+        if attrs["new_password"] == attrs["current_password"]:
+            raise serializers.ValidationError(
+                {"new_password": ["كلمة السر الجديدة لازم تكون مختلفة عن الحالية"]}
+            )
+        return attrs
+
+
+class AdminChangePasswordView(APIView):
+    """The signed-in admin changes their own password (current password required)."""
+
+    permission_classes = [IsAdminUser]
+    throttle_classes = [SensitiveRateThrottle]
+
+    @extend_schema(
+        request=ChangePasswordSerializer,
+        responses={204: None, 400: OpenApiResponse(description="Validation error")},
+    )
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        request.user.set_password(serializer.validated_data["new_password"])
+        request.user.save(update_fields=["password"])
+        return Response(status=status.HTTP_204_NO_CONTENT)

@@ -60,3 +60,40 @@ def test_customer_cannot_create_staff(auth_client):
     r = auth_client.post(URL, {"name": "هاكر", "phone": "01220001111", "password": "strong-pass-1"})
     assert r.status_code == 403
     assert not User.objects.filter(phone="01220001111").exists()
+
+
+PASSWORD_URL = "/api/v1/admin/me/password/"
+
+
+def test_change_password(admin_client, api_client, staff):
+    r = admin_client.post(
+        PASSWORD_URL, {"current_password": "s3cret-pass", "new_password": "brand-new-pass"}
+    )
+    assert r.status_code == 204
+    staff.refresh_from_db()
+    assert staff.check_password("brand-new-pass")
+    old = api_client.post(ADMIN_LOGIN, {"phone": staff.phone, "password": "s3cret-pass"})
+    assert old.status_code == 401
+
+
+@pytest.mark.parametrize(
+    ("payload", "field"),
+    [
+        ({"current_password": "wrong-pass", "new_password": "brand-new-pass"}, "current_password"),
+        ({"current_password": "s3cret-pass", "new_password": "short"}, "new_password"),
+        ({"current_password": "s3cret-pass", "new_password": "123456789"}, "new_password"),
+        ({"current_password": "s3cret-pass", "new_password": "s3cret-pass"}, "new_password"),
+        ({"new_password": "brand-new-pass"}, "current_password"),
+    ],
+)
+def test_change_password_validation(admin_client, staff, payload, field):
+    r = admin_client.post(PASSWORD_URL, payload)
+    assert r.status_code == 400
+    assert field in r.json()
+    staff.refresh_from_db()
+    assert staff.check_password("s3cret-pass")
+
+
+def test_customer_cannot_change_password_here(auth_client):
+    r = auth_client.post(PASSWORD_URL, {"current_password": "x", "new_password": "brand-new-pass"})
+    assert r.status_code == 403

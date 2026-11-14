@@ -414,4 +414,21 @@ export const adminHandlers = [
       { status: 201 },
     )
   }),
+
+  http.post(url('/admin/me/password/'), async ({ request }) => {
+    const auth = requireStaff(request)
+    if ('error' in auth) return auth.error
+    const b = (await request.json()) as { current_password?: string; new_password?: string }
+    const next = b.new_password ?? ''
+    if (b.current_password !== auth.user.password) {
+      return HttpResponse.json({ current_password: ['كلمة السر الحالية غلط'] }, { status: 400 })
+    }
+    let err = ''
+    if (next.length < 8) err = 'كلمة السر لازم تكون 8 حروف على الأقل'
+    else if (/^\d+$/.test(next)) err = 'كلمة السر مينفعش تكون أرقام بس'
+    else if (next === b.current_password) err = 'كلمة السر الجديدة لازم تكون مختلفة عن الحالية'
+    if (err) return HttpResponse.json({ new_password: [err] }, { status: 400 })
+    auth.user.password = next
+    return new HttpResponse(null, { status: 204 })
+  }),
 ]

@@ -53,6 +53,7 @@ MATRIX = {
     ("get", "/api/v1/admin/customers/{id}/orders/"): STAFF,
     ("get", "/api/v1/admin/staff/"): STAFF,
     ("post", "/api/v1/admin/staff/"): STAFF,
+    ("post", "/api/v1/admin/me/password/"): STAFF,
 }
 # Methods the spec file lists but that are not part of the access contract above (e.g. PUT aliases).
 IGNORED_METHODS = {"put", "head", "options", "parameters"}

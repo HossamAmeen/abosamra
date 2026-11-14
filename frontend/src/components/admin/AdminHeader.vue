@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Eye, ShieldCheck } from 'lucide-vue-next'
+import { Eye, UserRound } from 'lucide-vue-next'
 import AppLogo from '@/components/ui/AppLogo.vue'
 
 defineProps<{ title?: string; caption?: string }>()
@@ -13,12 +13,12 @@ defineProps<{ title?: string; caption?: string }>()
       <AppLogo variant="admin" :size="40" />
       <div class="flex items-center gap-2">
         <RouterLink
-          to="/admin/staff"
-          aria-label="الأدمنز"
-          title="الأدمنز"
+          to="/admin/profile"
+          aria-label="حسابي"
+          title="حسابي"
           class="flex h-11 w-11 items-center justify-center rounded-field bg-primary-tint text-brand-deep"
         >
-          <ShieldCheck class="h-5 w-5" aria-hidden="true" />
+          <UserRound class="h-5 w-5" aria-hidden="true" />
         </RouterLink>
         <slot name="action">
           <a

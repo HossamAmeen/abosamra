@@ -93,6 +93,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/AdminDashboard'
           description: ''
+  /api/v1/admin/me/password/:
+    post:
+      operationId: v1_admin_me_password_create
+      description: The signed-in admin changes their own password (current password
+        required).
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+        '400':
+          description: Validation error
   /api/v1/admin/offers/:
     get:
       operationId: v1_admin_offers_list
@@ -1519,6 +1545,21 @@ components:
       required:
       - name
       - slug
+    ChangePasswordRequest:
+      type: object
+      properties:
+        current_password:
+          type: string
+          writeOnly: true
+          minLength: 1
+        new_password:
+          type: string
+          writeOnly: true
+          minLength: 8
+          maxLength: 128
+      required:
+      - current_password
+      - new_password
     CodeEnum:
       enum:
       - unavailable

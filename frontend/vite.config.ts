@@ -25,10 +25,33 @@ function preloadCriticalFonts(): Plugin {
   }
 }
 
+// Writes dist/version.json with VITE_APP_VERSION (set in .env.production, or in the build
+// environment). It is not precached, so the installed app can ask the server which version
+// is deployed and label the "new version" toast with it.
+function versionFile(): Plugin {
+  let version = ''
+  return {
+    name: 'abosamra-version-file',
+    apply: 'build',
+    configResolved(config) {
+      version = config.env.VITE_APP_VERSION || ''
+      if (!version) config.logger.warn('VITE_APP_VERSION is not set: the app will show "dev"')
+    },
+    generateBundle() {
+      this.emitFile({
+        type: 'asset',
+        fileName: 'version.json',
+        source: JSON.stringify({ version, built_at: new Date().toISOString() }),
+      })
+    },
+  }
+}
+
 export default defineConfig({
   plugins: [
     vue(),
     preloadCriticalFonts(),
+    versionFile(),
     VitePWA({
       registerType: 'prompt', // the app shows the "فيه نسخة جديدة" toast, then calls update
       injectRegister: false,
@@ -75,6 +98,10 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
+            urlPattern: ({ url }) => url.pathname === '/version.json',
+            handler: 'NetworkOnly',
+          },
+          {
             // Auth, quote, orders and every admin call: never cached.
             urlPattern: ({ url }) =>
               /\/api\/v1\/(auth|cart|orders|admin|me)(\/|$)/.test(url.pathname),
@@ -110,6 +137,10 @@ export default defineConfig({
     globals: true,
     include: ['src/**/*.spec.ts'],
     setupFiles: ['src/test/setup.ts'],
-    env: { VITE_API_BASE_URL: 'http://localhost:8000/api/v1', VITE_USE_MOCKS: 'false' },
+    env: {
+      VITE_API_BASE_URL: 'http://localhost:8000/api/v1',
+      VITE_USE_MOCKS: 'false',
+      VITE_APP_VERSION: '1.2.3',
+    },
   },
 })
